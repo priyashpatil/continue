@@ -21,6 +21,9 @@ class FileSystemIde implements IDE {
   constructor() {
     fs.mkdirSync(FileSystemIde.workspaceDir, { recursive: true });
   }
+  fileExists(filepath: string): Promise<boolean> {
+    return Promise.resolve(fs.existsSync(filepath));
+  }
 
   gotoDefinition(location: Location): Promise<RangeInFile[]> {
     throw new Error("Method not implemented.");
