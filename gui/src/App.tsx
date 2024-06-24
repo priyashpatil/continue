@@ -1,23 +1,19 @@
 import { useDispatch } from "react-redux";
 import { RouterProvider, createMemoryRouter } from "react-router-dom";
 import Layout from "./components/Layout";
-import useSetup from "./hooks/useSetup";
-import ErrorPage from "./pages/error";
-import { default as Help, default as HelpPage } from "./pages/help";
-import History from "./pages/history";
-import MigrationPage from "./pages/migration";
-import { ConfigureProvider, AddNewModel } from "./pages/AddNewModel";
-import MonacoPage from "./pages/monaco";
-import SettingsPage from "./pages/settings";
 import { SubmenuContextProvidersContext } from "./context/SubmenuContextProviders";
 import { VscThemeContext } from "./context/VscTheme";
+import useSetup from "./hooks/useSetup";
 import useSubmenuContextProviders from "./hooks/useSubmenuContextProviders";
 import { useVscTheme } from "./hooks/useVscTheme";
+import { AddNewModel, ConfigureProvider } from "./pages/AddNewModel";
+import ErrorPage from "./pages/error";
 import GUI from "./pages/gui";
 import LocalOnboarding from "./pages/onboarding/LocalOnboarding";
 import ApiKeyAutocompleteOnboarding from "./pages/onboarding/apiKeyAutocompleteOnboarding";
 import ApiKeyOnboarding from "./pages/onboarding/apiKeyOnboarding";
 import Onboarding from "./pages/onboarding/onboarding";
+import SettingsPage from "./pages/settings";
 import Stats from "./pages/stats";
 import { useEffect } from "react";
 

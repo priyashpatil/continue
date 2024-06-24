@@ -1,15 +1,22 @@
 import { useContext, useEffect, useState } from "react";
+import { useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import { greenButtonColor } from "../../components";
+import { greenButtonColor, lightGray } from "../../components";
+import ConfirmationDialog from "../../components/dialogs/ConfirmationDialog";
 import { ftl } from "../../components/dialogs/FTCDialog";
 import GitHubSignInButton from "../../components/modelSelection/quickSetup/GitHubSignInButton";
 import { IdeMessengerContext } from "../../context/IdeMessenger";
+import {
+  setDialogMessage,
+  setShowDialog,
+} from "../../redux/slices/uiStateSlice";
 import { isJetBrains } from "../../util";
 import { getLocalStorage, setLocalStorage } from "../../util/localStorage";
 import { Div, StyledButton } from "./components";
 
 function Onboarding() {
   const navigate = useNavigate();
+  const dispatch = useDispatch();
   const ideMessenger = useContext(IdeMessengerContext);
 
   const [hovered0, setHovered0] = useState(false);
@@ -124,10 +131,25 @@ function Onboarding() {
               ideMessenger.post("index/forceReIndex", undefined);
               navigate("/apiKeyOnboarding");
             }
-          }}
-        >
-          Continue
-        </StyledButton>
+            disabled={selected < 0}
+            onClick={() => {
+              ideMessenger.post("completeOnboarding", {
+                mode: ["apiKeys", "local"][selected] as any,
+              });
+              setLocalStorage("onboardingComplete", true);
+
+              if (selected === 1) {
+                navigate("/localOnboarding");
+              } else {
+                // Only needed when we switch from the default (local) embeddings provider
+                ideMessenger.post("index/forceReIndex", undefined);
+                navigate("/apiKeyOnboarding");
+              }
+            }}
+          >
+            Continue
+          </StyledButton>
+        </div>
       </div>
 
       {(!getLocalStorage("onboardingComplete") || isJetBrains()) && (
