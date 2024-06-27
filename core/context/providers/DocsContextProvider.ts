@@ -5,10 +5,12 @@ import {
   ContextProviderExtras,
   ContextSubmenuItem,
   LoadSubmenuItemsArgs,
+  SiteIndexingConfig,
 } from "../../index.js";
 import configs from "../../indexing/docs/preIndexedDocs.js";
 import TransformersJsEmbeddingsProvider from "../../indexing/embeddings/TransformersJsEmbeddingsProvider.js";
 import { BaseContextProvider } from "../index.js";
+import { listDocs } from "../../indexing/docs/db.js";
 
 class DocsContextProvider extends BaseContextProvider {
   static DEFAULT_N_RETRIEVE = 30;
@@ -102,30 +104,39 @@ class DocsContextProvider extends BaseContextProvider {
     ];
   }
 
-  async loadSubmenuItems(
-    args: LoadSubmenuItemsArgs,
-  ): Promise<ContextSubmenuItem[]> {
-    const { listDocs } = await import("../../indexing/docs/db.js");
-    const docs = await listDocs();
-    const submenuItems: ContextSubmenuItem[] = docs.map((doc) => ({
+  private _getDocsSitesConfig(): SiteIndexingConfig[] {
+    return [...configs, ...(this.options?.sites || [])];
+  }
+
+  private async _getIndexedDocsContextSubmenuItems(): Promise<ContextSubmenuItem[]> {
+    return (await listDocs()).map((doc) => ({
       title: doc.title,
       description: new URL(doc.baseUrl).hostname,
       id: doc.baseUrl,
     }));
+  }
 
-    submenuItems.push(
-      ...configs
-        // After it's actually downloaded, we don't want to show twice
-        .filter(
-          (config) => !submenuItems.some((item) => item.id === config.startUrl),
-        )
-        .map((config) => ({
-          title: config.title,
-          description: new URL(config.startUrl).hostname,
-          id: config.startUrl,
-          // iconUrl: config.faviconUrl,
-        })),
-    );
+  async loadSubmenuItems(
+    args: LoadSubmenuItemsArgs,
+  ): Promise<ContextSubmenuItem[]> {
+    const submenuItemsMap = new Map<string, ContextSubmenuItem>();
+
+    const submenuItemsFromIndexed = await this._getIndexedDocsContextSubmenuItems();
+    submenuItemsFromIndexed.forEach((item) => {
+      submenuItemsMap.set(item.id, item);
+    });
+
+    const allDocsSitesItems = this._getDocsSitesConfig();
+    allDocsSitesItems.forEach((config) => {
+      const ctxSubMenuItem = this._createContextSubmenuItem({
+        title: config.title,
+        url: config.startUrl
+      });
+
+      submenuItemsMap.set(ctxSubMenuItem.id, ctxSubMenuItem);
+    });
+
+    const submenuItems = Array.from(submenuItemsMap.values());
 
     // Sort submenuItems such that the objects with titles which don't occur in configs occur first, and alphabetized
     submenuItems.sort((a, b) => {
@@ -157,6 +168,25 @@ class DocsContextProvider extends BaseContextProvider {
     // });
 
     return submenuItems;
+  }
+
+  private _createContextSubmenuItem({
+    title,
+    url,
+    description,
+    iconUrl,
+  }: {
+    title: string;
+    url: string;
+    description?: string;
+    iconUrl?: string;
+  }): ContextSubmenuItem {
+    return {
+      id: url,
+      title,
+      description: description ?? new URL(url).hostname,
+      iconUrl: iconUrl ?? undefined,
+    };
   }
 }
 

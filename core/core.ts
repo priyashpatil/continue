@@ -30,6 +30,7 @@ import type { IMessenger, Message } from "./util/messenger";
 import { editConfigJson } from "./util/paths.js";
 import { Telemetry } from "./util/posthog.js";
 import { streamDiffLines } from "./util/verticalEdit.js";
+import { hasDoc } from "./indexing/docs/db.js";
 
 export class Core {
   // implements IMessenger<ToCoreProtocol, FromCoreProtocol>
@@ -204,6 +205,25 @@ export class Core {
     on("config/ideSettingsUpdate", (msg) => {
       this.configHandler.updateIdeSettings(msg.data);
     });
+    // Docs
+    on("config/getDocsSitesConfig", async () => {
+      const config = await this.config();
+      const provider = config.contextProviders?.find(
+        (provider) => provider.description.title === "docs",
+      );
+
+      if (provider) {
+        const mProvider: any = { ...provider };
+        const options: SiteIndexingConfig[] = mProvider?.options?.sites || [];
+
+        return options;
+      }
+
+      return [];
+    });
+    on("docs/hasIndexed", async (msg) => {
+      return { data: await hasDoc(msg.data.id) };
+    });
 
     // Context providers
     on("context/addDocs", async (msg) => {
@@ -215,10 +235,12 @@ export class Core {
         faviconUrl: new URL("/favicon.ico", msg.data.rootUrl).toString(),
       };
 
-      for await (const _ of indexDocs(
+      for await (const update of indexDocs(
         siteIndexingConfig,
         new TransformersJsEmbeddingsProvider(),
       )) {
+        this.messenger.request("indexProgress", update);
+        this.indexingState = update;
       }
       this.ide.infoPopup(`🎉 Successfully indexed ${msg.data.title}`);
       this.messenger.send("refreshSubmenuItems", undefined);
