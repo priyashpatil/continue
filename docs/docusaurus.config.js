@@ -77,10 +77,38 @@ const config = {
         },
         items: [
           {
+            label: "Install",
+            sidebarId: "installSidebar",
             type: "docSidebar",
-            sidebarId: "docsSidebar",
             position: "left",
+          },
+          {
+            label: "Tutorials",
+            sidebarId: "tutorialsSidebar",
+            type: "docSidebar",
+            position: "left",
+          },
+          {
             label: "Docs",
+            sidebarId: "docsSidebar",
+            type: "docSidebar",
+            position: "left",
+
+          },
+          { to: 'reference/config', label: 'Reference', position: 'left' },
+          {
+            label: "Privacy",
+            sidebarId: "privacySidebar",
+            type: "docSidebar",
+            position: "left",
+
+          },
+          {
+            label: "Community",
+            sidebarId: "communitySidebar",
+            type: "docSidebar",
+            position: "left",
+
           },
           {
             to: "https://github.com/continuedev/continue",
